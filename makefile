@@ -1,4 +1,4 @@
-.PHONY: compile test test-deps
+.PHONY: clean compile test test-deps
 
 REBAR=rebar
 REBAR_TEST=$(REBAR) -C rebar.test.config
@@ -11,3 +11,6 @@ test-deps:
 
 compile:
 	$(REBAR_TEST) compile
+
+clean:
+	$(REBAR_TEST) clean
