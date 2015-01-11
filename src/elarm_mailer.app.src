@@ -1,0 +1,13 @@
+{application, elarm_mailer,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  elarm
+                 ]},
+  {mod, { elarm_mailer_app, []}},
+  {env, []}
+ ]}.
