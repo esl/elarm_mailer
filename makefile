@@ -4,7 +4,7 @@ REBAR=rebar
 REBAR_TEST=$(REBAR) -C rebar.test.config
 
 test:	test-deps compile
-	$(REBAR_TEST) ct
+	$(REBAR_TEST) ct skip_deps=true
 
 test-deps:
 	$(REBAR_TEST) get-deps

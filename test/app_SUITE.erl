@@ -1,6 +1,9 @@
 -module(app_SUITE).
 -compile([export_all]).
--define(then, fun).
+
+-define(given, fun).
+-define(_when, fun).
+-define(_then, fun).
 
 all() ->
     [it_starts_up,
@@ -10,56 +13,78 @@ all() ->
     ].
 
 it_starts_up(_) ->
-    bddr:test(given_nothing,
-              when_app_starts(),
-              ?then(AppStarted)->  ok = AppStarted end,
+    bddr:test(?given() -> no_previous_state end,
+              ?_when(_) -> app_is_started() end,
+              ?_then(AppStarted) -> ok = AppStarted end,
               teardown()).
 
 it_has_access_to_environemt_vars(_) ->
-    bddr:test(given_app_started(),
-              when_app_asks_for_keys(elarm_mailer),
-              ?then(Keys) -> {ok, [_|_]} = Keys end,
+    bddr:test(?given() -> app_is_started() end,
+              ?_when(_) -> app_asks_for_keys(elarm_mailer) end,
+              ?_then(Keys) -> {ok, [_|_]} = Keys end,
               teardown()).
 
 it_sends_mail_on_subscribed_alarm(CT) ->
-    bddr:test([given_app_started(),
-               given_configured_command(mocked_sendmail(CT)),
-               given_configured_alarm(peace_attack)],
-              when_alarm_gets_raised(peace_attack, "Hello"),
-              ?then(_) ->
+    bddr:test(?given() ->
+                     User = local_user(),
+                     app_is_started(),
+                     configured_command(mocked_sendmail_cmd(CT)),
+                     configured_email_headers([{from, User}, {to, User}]),
+
+                     subscribed_alarm(peace_attack),
+                     alarm_gets_raised(peace_attack, "Hello"),
+                     User end,
+
+              ?_when(User) -> user_checks_email(User) end,
+
+              ?_then(Email) ->
                      {alarm,peace_attack,undefined,"Hello",_Date,_Time,
                       _,_,_,_,[],[],[],_,_,new, _}
-                         = received_email() end,
+                         = Email end,
               teardown()).
 
 it_doesnt_send_mail_on_unsubscribed_alarm(CT) ->
-    bddr:test([given_app_started(),
-               given_configured_command(mocked_sendmail(CT)),
-               given_configured_alarm(peace_attack)],
-              when_alarm_gets_raised(pigeons_ahoy, "Plop"),
-              ?then(_) -> none = received_email() end,
+    bddr:test(?given()->
+                     User = local_user(),
+                     app_is_started(),
+                     configured_command(mocked_sendmail_cmd(CT)),
+                     configured_email_headers([{from, User}, {to, User}]),
+
+                     subscribed_alarm(peace_attack),
+                     alarm_gets_raised(pigeons_ahoy, "Plop"),
+                     User end,
+
+              ?_when(User) -> user_checks_email(User) end,
+
+              ?_then(Email) -> none = Email end,
               teardown()).
 
 given_app_started() -> start_app().
 
-given_configured_alarm(Alarm) ->
+local_user() ->
+    string:strip(os:cmd("echo $USER"), right, $\n) ++ "@localhost".
+
+subscribed_alarm(Alarm) ->
     elarm_mailer:subscribe_to(Alarm).
 
-given_configured_command(CmdLocation) ->
+configured_command(CmdLocation) ->
     application:set_env(elarm_mailer, sendmail_command, CmdLocation).
 
+configured_email_headers(Headers) ->
+    application:set_env(elarm_mailer, sendmail_headers, Headers).
 
-when_alarm_gets_raised(Alarm, Entity) ->
-    fun(_G) -> elarm:raise(Alarm, Entity, []) end.
+alarm_gets_raised(Alarm, Entity) ->
+    elarm:raise(Alarm, Entity, []).
 
-when_app_asks_for_keys(AppName) ->
-    fun(_G) -> application:get_all_key(AppName) end.
+app_asks_for_keys(AppName) ->
+    application:get_all_key(AppName).
 
-when_app_starts() -> fun(_G) -> start_app() end.
+app_is_started() -> start_app().
 
-received_email() ->
-    timer:sleep(1000),
-    case file:read_file(mocked_sent_mail_location()) of
+user_checks_email(Username) ->
+    timer:sleep(300),
+    Loc = mocked_sent_mail_location(Username, Username),
+    case file:read_file(Loc) of
         {ok, B} -> string_to_term(binary_to_list(B));
         {error, enoent} -> none
     end.
@@ -79,17 +104,17 @@ teardown() ->
             error_logger:tty(true)
     end.
 
-mocked_sendmail(CTConfig) ->
+mocked_sendmail_cmd(CTConfig) ->
     {data_dir, D} = lists:keyfind(data_dir, 1, CTConfig),
     D ++ "mocked_sendmail".
 
-mocked_sent_mail_location() ->
+mocked_sent_mail_location(From, To) ->
     %% This currently hard-coded in
     %% test/app_SUITE_data/mocked_sendmail
-    "/tmp/mocked_sendmail.out".
+    "/tmp/from." ++ From ++ ".to." ++ To ++ ".mocked_sendmail.out".
 
 remove_mocked_sent_file() ->
-    os:cmd("rm -f " ++ mocked_sent_mail_location()).
+    os:cmd("rm -f " ++ mocked_sent_mail_location("*", "*")).
 
 string_to_term(String) ->
     {ok,Tokens,_} = erl_scan:string(String ++ "."),

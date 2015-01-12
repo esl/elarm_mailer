@@ -10,6 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    %% todo specify temp dir in config
+    os:cmd("mkdir -p /tmp/elarm_mailer"),
     elarm_mailer_sup:start_link().
 
 stop(_State) ->

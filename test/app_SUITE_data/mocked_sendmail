@@ -1,3 +1,30 @@
-#!/bin/sh
+#!/usr/bin/env python
+import sys
+import re
 
-echo "$@" > /tmp/mocked_sendmail.out
+""" This script accepts emails in the same format sendmail does, and dumps their contents
+    into:
+    /tmp/from.<from@addres>.to.<to@address>.mocked_sendmail.out
+"""
+
+input = sys.stdin.readlines()
+
+def get_regexp(regexp, lines):
+    for line in lines:
+        m = re.match(regexp, line)
+        if m:
+            return m.group(1)
+    return False
+    
+def get_to(lines):
+    return get_regexp(re.compile("To: (.*)$"), lines)
+
+def get_from(lines):
+    return get_regexp(re.compile("From: (.*)$"), lines)
+def get_erlang_term(lines):
+    return get_regexp(re.compile("^({.*})$"), lines)
+
+with file("/tmp/from." + get_from(input) + 
+          ".to." + get_to(input) + 
+          ".mocked_sendmail.out", "w")  as f:
+    f.write("".join(get_erlang_term(input)))
