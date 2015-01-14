@@ -1,12 +1,22 @@
 -module(elarm_mailer).
--export([subscribe_all/3]).
--export([subscribe_to/3]).
+-export([subscribe_to_alarm/3, subscribe_to_alarms/3]).
+-export([get_subscribed_alarms/0]).
+-export([start/0]).
+
 -define(WORKER_SUP, elarm_mailer_sup).
 
-subscribe_all(From, To, Alarms) ->
-    lists:foreach(fun(Alarm) -> subscribe_to(From, To, Alarm) end,
-                  Alarms),
-    ok.
+start() ->
+    %% For local testing
+    application:start(elarm),
+    ok = application:start(elarm_mailer).
 
-subscribe_to(From, To, AlarmName) ->
-    {ok, _Pid} = supervisor:start_child(elarm_mailer_sup, [From, To, AlarmName]).
+get_subscribed_alarms() ->
+    [ {elarm_mailer_worker:get_alarm(Worker), Worker}
+      || {_,Worker,_,_} <- supervisor:which_children(?WORKER_SUP) ].
+
+subscribe_to_alarm(From, To, AlarmName) ->
+    {ok, _P} = supervisor:start_child(?WORKER_SUP, [From, To, AlarmName]).
+
+subscribe_to_alarms(From, To, Alarms) ->
+    lists:foreach(fun(A) -> subscribe_to_alarm(From, To, A) end, Alarms),
+    ok.

@@ -9,7 +9,8 @@ all() ->
     [it_starts_up,
      it_has_access_to_environemt_vars,
      it_sends_mail_on_subscribed_alarm,
-     it_doesnt_send_mail_on_unsubscribed_alarm
+     it_doesnt_send_mail_on_unsubscribed_alarm,
+     it_can_report_subscribed_alarms
     ].
 
 it_starts_up(_) ->
@@ -57,6 +58,20 @@ it_doesnt_send_mail_on_unsubscribed_alarm(CT) ->
               ?_then(Email) -> none = Email end,
               teardown()).
 
+it_can_report_subscribed_alarms(CT) ->
+    bddr:test(?given()->
+                     User = local_user(),
+                     app_is_started(),
+                     configured_command(mocked_sendmail_cmd(CT)),
+                     configured_email_headers([{from, User}, {to, User}]),
+                     configured_alarms([george, john, paul, ringo]) end,
+
+              ?_when(_) -> api_is_asked_for_alarms() end,
+
+              ?_then(Alarms) -> [{george,_}, {john,_}, {paul,_}, {ringo,_}] =
+                                    lists:sort(Alarms) end,
+              teardown()).
+
 given_app_started() -> start_app().
 
 local_user() ->
@@ -83,6 +98,9 @@ app_asks_for_keys(AppName) ->
     application:get_all_key(AppName).
 
 app_is_started() -> start_app().
+
+api_is_asked_for_alarms() ->
+    elarm_mailer:get_subscribed_alarms().
 
 user_checks_email(Username) ->
     timer:sleep(300),

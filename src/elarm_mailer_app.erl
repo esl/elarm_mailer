@@ -12,10 +12,9 @@ start(_StartType, _StartArgs) ->
     %% todo specify temp dir in config
     os:cmd("mkdir -p /tmp/elarm_mailer"),
     {ok, Sup} = elarm_mailer_sup:start_link(),
-    ok = elarm_mailer:subscribe_all
-           (app_config_header(from),
-            app_config_header(to),
-            app_config_alarms()),
+    ok = elarm_mailer:subscribe_to_alarms(app_config_header(from),
+                                          app_config_header(to),
+                                          app_config_alarms()),
     {ok, Sup}.
 
 stop(_State) ->
