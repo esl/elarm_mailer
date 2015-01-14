@@ -9,7 +9,7 @@ all() ->
     [it_starts_up,
      it_has_access_to_environemt_vars,
      it_sends_mail_on_subscribed_alarm,
-     it_doesnt_send_mail_on_unsubscribed_alarm,
+     it_doesnt_send_mail_on_non_subscribed_alarm,
      it_can_report_subscribed_alarms
     ].
 
@@ -43,7 +43,7 @@ it_sends_mail_on_subscribed_alarm(CT) ->
                          = Email end,
               teardown()).
 
-it_doesnt_send_mail_on_unsubscribed_alarm(CT) ->
+it_doesnt_send_mail_on_non_subscribed_alarm(CT) ->
     bddr:test(?given()->
                      User = local_user(),
                      app_is_started(),
@@ -88,6 +88,8 @@ configured_email_headers(Headers) ->
 
 configured_alarms(Alarms) when is_list(Alarms) ->
     application:set_env(elarm_mailer, subscribed_alarms, Alarms),
+    %% we do this so the application can read its env again, with the new alarms
+    %% It will subscribe to them upon starting
     application:stop(elarm_mailer),
     application:start(elarm_mailer).
 
