@@ -1,4 +1,4 @@
-.PHONY: clean compile test test-deps
+.PHONY: clean compile devrun test test-deps
 
 REBAR=rebar
 REBAR_TEST=$(REBAR) -C rebar.test.config
@@ -14,3 +14,7 @@ compile:
 
 clean:
 	$(REBAR_TEST) clean
+
+devrun: compile
+	cp ./priv/elarm_mailer.app.dev ./ebin/elarm_mailer.app
+	erl -pa ./deps/*/ebin -pa ebin -s elarm_mailer start
