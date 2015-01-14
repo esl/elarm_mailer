@@ -1,25 +1,12 @@
 -module(elarm_mailer).
--export([subscribe_to/1]).
--export([mailer/3]).
--include_lib("elarm/include/elarm.hrl").
+-export([subscribe_all/3]).
+-export([subscribe_to/3]).
+-define(WORKER_SUP, elarm_mailer_sup).
 
-subscribe_to(AlarmName) ->
-    From = header(from),
-    To = header(to),
-    MailerF = spawn_link(fun()-> ?MODULE:mailer(From, To, AlarmName) end),
-    {Ref, _, _} = elarm:subscribe([all], MailerF),
-    {ok, Ref}.
+subscribe_all(From, To, Alarms) ->
+    lists:foreach(fun(Alarm) -> subscribe_to(From, To, Alarm) end,
+                  Alarms),
+    ok.
 
-mailer(From, To, AlarmName) ->
-    receive
-        {elarm, _, #alarm{alarm_id=AlarmName} = A} ->
-            elarm_mailer_sendmail:send(From, To, A),
-            mailer(From, To, AlarmName);
-        _ ->
-            mailer(From, To, AlarmName)
-    end.
-
-header(Atom) ->
-    {ok, Plist} = application:get_env(elarm_mailer, sendmail_headers),
-    {Atom, Val} = lists:keyfind(Atom, 1, Plist),
-    Val.
+subscribe_to(From, To, AlarmName) ->
+    {ok, _Pid} = supervisor:start_child(elarm_mailer_sup, [From, To, AlarmName]).

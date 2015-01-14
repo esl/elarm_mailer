@@ -30,8 +30,7 @@ it_sends_mail_on_subscribed_alarm(CT) ->
                      app_is_started(),
                      configured_command(mocked_sendmail_cmd(CT)),
                      configured_email_headers([{from, User}, {to, User}]),
-
-                     subscribed_alarm(peace_attack),
+                     configured_alarms([peace_attack]),
                      alarm_gets_raised(peace_attack, "Hello"),
                      User end,
 
@@ -49,8 +48,7 @@ it_doesnt_send_mail_on_unsubscribed_alarm(CT) ->
                      app_is_started(),
                      configured_command(mocked_sendmail_cmd(CT)),
                      configured_email_headers([{from, User}, {to, User}]),
-
-                     subscribed_alarm(peace_attack),
+                     configured_alarms([peace_attack]),
                      alarm_gets_raised(pigeons_ahoy, "Plop"),
                      User end,
 
@@ -72,6 +70,11 @@ configured_command(CmdLocation) ->
 
 configured_email_headers(Headers) ->
     application:set_env(elarm_mailer, sendmail_headers, Headers).
+
+configured_alarms(Alarms) when is_list(Alarms) ->
+    application:set_env(elarm_mailer, subscribed_alarms, Alarms),
+    application:stop(elarm_mailer),
+    application:start(elarm_mailer).
 
 alarm_gets_raised(Alarm, Entity) ->
     elarm:raise(Alarm, Entity, []).

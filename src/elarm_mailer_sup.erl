@@ -1,8 +1,5 @@
 -module(elarm_mailer_sup).
-
 -behaviour(supervisor).
-
-%% API
 -export([start_link/0]).
 
 %% Supervisor callbacks
@@ -23,5 +20,7 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
-
+    WorkerSpec = {elarm_mailer_worker,
+                  {elarm_mailer_worker, start_link, []},
+                  temporary, 2000, worker, [elarm_mailer_worker]},
+    {ok, { {simple_one_for_one, 5, 10}, [WorkerSpec]}}.

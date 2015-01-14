@@ -9,5 +9,10 @@
                   elarm
                  ]},
   {mod, { elarm_mailer_app, []}},
-  {env, []}
+  {env, [
+         {sendmail_command, "sendmail -vt"},
+         {sendmail_headers, [{from, "nobody@locahost"},
+                             {to, "nobody@localhost"}]},
+         {subscribed_alarms, []}
+        ]}
  ]}.
