@@ -38,7 +38,9 @@ handle_cast(_,S) -> {noreply, S}.
 
 handle_info({elarm, _, #alarm{alarm_id=AlarmName} = A},
             #state{subscribed_alarm=AlarmName} = S) ->
-    elarm_mailer_email:send(S#state.from, S#state.to, S#state.gen_smtp_options, A),
+    EmailBody = elarm_mailer_email:make_body(S#state.from, S#state.to, A),
+    gen_smtp_client:send({S#state.from, S#state.to, EmailBody},
+                         S#state.gen_smtp_options),
     {noreply, S};
 handle_info(_, S) -> {noreply, S}.
 
