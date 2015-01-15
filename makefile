@@ -15,6 +15,9 @@ compile:
 clean:
 	$(REBAR_TEST) clean
 
+devsmtp:
+	python -m smtpd -n -c DebuggingServer localhost:2525
+
 devrun: compile
 	cp ./priv/elarm_mailer.app.dev ./ebin/elarm_mailer.app
 	erl -pa ./deps/*/ebin -pa ebin -s elarm_mailer start

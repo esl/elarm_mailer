@@ -9,11 +9,15 @@
 -define(SMTP_HOST, "localhost").
 -define(SMTP_PORT, 2525).
 
-all() ->
-    [it_starts_up,
-     it_sends_mail_on_subscribed_alarm,
-     it_doesnt_send_mail_on_non_subscribed_alarm,
-     it_can_report_subscribed_alarms
+all() -> [{group, main}].
+
+groups() ->
+    [{main, [shuffle, {repeat, 5}],
+      [it_starts_up,
+       it_sends_mail_on_subscribed_alarm,
+       it_doesnt_send_mail_on_non_subscribed_alarm,
+       it_can_report_subscribed_alarms
+      ]}
     ].
 
 it_starts_up(_) ->
@@ -62,6 +66,7 @@ it_doesnt_send_mail_on_non_subscribed_alarm(CT) ->
 it_can_report_subscribed_alarms(CT) ->
     bddr:test(?given()->
                      User = local_user(),
+                     smtp_server_running(),
                      app_is_started_with_config
                        (options_for(User) ++
                             [{subscribed_alarms, [george, john, paul, ringo]}]) end,
@@ -93,6 +98,7 @@ readable({_, {from, F}, {to, T}, {body, B}}) ->
      {body, extract_terms(B)}}.
 
 extract_terms(Body) ->
+    %% error_logger:error_msg("body~p~n",[Body]),
     [_Before, After] = binary:split(Body, list_to_binary("\r\n\r\n")),
     A = parse_binary(After),
     {A#alarm.alarm_id, A#alarm.src}.
@@ -112,7 +118,7 @@ start_app(Config) ->
     application:load(elarm_mailer),
     [ Swap(Key) ||
         Key <- [sender, recipients, gen_smtp_options, subscribed_alarms] ],
-    application:start(elarm_mailer).
+    ok = application:start(elarm_mailer).
 
 teardown() ->
     fun(_Givens) ->

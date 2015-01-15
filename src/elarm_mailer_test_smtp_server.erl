@@ -135,9 +135,7 @@ handle_RCPT_extension(Extension, _State) ->
 handle_DATA(_From, _To, <<>>, State) ->
 	{error, "552 Message too small", State};
 handle_DATA(From, To, Data, State) ->
-    %% some kind of unique id
     Reference = lists:flatten([io_lib:format("~2.16.0b", [X]) || <<X>> <= erlang:md5(term_to_binary(erlang:now()))]),
-    %% if RELAY is true, then relay email to email address, else send email data to console
     ?LOG("message from ~s to ~p queued as ~s, body l ~p~n", [From, To, Reference, Data]),
     notify_mailbox_or_crash({os:timestamp(), {from, From}, {to, To}, {body, Data}}),
     %% At this point, if we return ok, we've accepted responsibility for the email
