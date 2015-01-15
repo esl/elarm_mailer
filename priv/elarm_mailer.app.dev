@@ -4,11 +4,16 @@
               {registered,[]},
               {applications,[kernel,stdlib,elarm]},
               {mod,{elarm_mailer_app,[]}},
-              {env,[
-                    {sendmail_command, "sendmail -vt"},
-                    {sendmail_headers, [{from, "simon.zelazny@locahost"},
-                                        {to, "simon.zelazny@localhost"}]},
+
+              {env,[{sender, "simon.zelazny@localhost"},
+                    {recipients, ["simon.zelazny@localhost"]},
+                    {gen_smtp_options,
+                     [{relay, "localhost"},
+                      {username, "simon.zelazny@localhost"},
+                      {password, "password123"},
+                      {port, 2525}]},
                     {subscribed_alarms, [one_potato, two_potato]}
                    ]},
+
               {modules,[elarm_mailer,elarm_mailer_app,elarm_mailer_sendmail,
                         elarm_mailer_sup]}]}.

@@ -18,3 +18,7 @@ clean:
 devrun: compile
 	cp ./priv/elarm_mailer.app.dev ./ebin/elarm_mailer.app
 	erl -pa ./deps/*/ebin -pa ebin -s elarm_mailer start
+
+shell: compile
+	cp ./priv/elarm_mailer.app.dev ./ebin/elarm_mailer.app
+	erl -pa ./deps/*/ebin -pa ebin
