@@ -42,11 +42,11 @@ it_sends_mail_on_subscribed_alarm(CT) ->
 
               ?_when(User) -> user_checks_email(User) end,
 
-              ?_then(Email) ->
+              ?_then(UsersMail) ->
                      {{from, User},
                       {to, ["administrator@example.com"]},
                       {body, {peace_attack, "Hello"}}}
-                         = readable(hd(Email)) end,
+                         = readable(hd(UsersMail)) end,
               teardown()).
 
 it_doesnt_send_mail_on_non_subscribed_alarm(CT) ->
@@ -60,7 +60,8 @@ it_doesnt_send_mail_on_non_subscribed_alarm(CT) ->
 
               ?_when(User) -> user_checks_email(User) end,
 
-              ?_then(Email) -> [] = Email end,
+              ?_then(UsersMail) ->
+                     [] = UsersMail end,
               teardown()).
 
 it_can_report_subscribed_alarms(CT) ->
@@ -73,8 +74,9 @@ it_can_report_subscribed_alarms(CT) ->
 
               ?_when(_) -> api_is_asked_for_alarms() end,
 
-              ?_then(Alarms) -> [{george,_}, {john,_}, {paul,_}, {ringo,_}] =
-                                    lists:sort(Alarms) end,
+              ?_then(Alarms) ->
+                     [{george,_}, {john,_}, {paul,_}, {ringo,_}] =
+                         lists:sort(Alarms) end,
               teardown()).
 
 local_user() ->
