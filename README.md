@@ -5,7 +5,7 @@ elarm_mailer
 Quick start
 -----------
 Take a look at `priv/elarm_mailer.app.dev` for a configuration example.  
-`make devrun` will start up the application with the settings copied over from `priv/elarm_mailer.app.dev.
+`make devrun` will start up the application with the settings copied over from `priv/elarm_mailer.app.dev`.
 
 
 Testing
