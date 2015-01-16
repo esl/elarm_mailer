@@ -11,5 +11,5 @@ default_value(elarm_server) -> elarm_server;
 default_value(gen_smtp_options) -> [];
 default_value(recipients) -> [];
 default_value(sender) -> "nobody@nohost";
-default_value(subscribed_atoms) -> [];
+default_value(subscribed_alarms) -> [];
 default_value(X) -> error({missing_default_value, X}).

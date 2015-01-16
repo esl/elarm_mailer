@@ -24,15 +24,15 @@ get_alarm(Worker) ->
 
 init([From, To, GenSmtpOptions, ElarmServer, AlarmName]) ->
     process_flag(trap_exit, true),
-    error_logger:info_msg("worker started with args: ~p\n",
-                          [{From, To, GenSmtpOptions, ElarmServer, AlarmName}]),
+    lager:info("worker started with args: ~p\n",
+               [{From, To, GenSmtpOptions, ElarmServer, AlarmName}]),
     {_Ref, _, _} = elarm:subscribe(ElarmServer, [all], self()),
     {ok, #state{ from = From, to = To,
                  subscribed_alarm = AlarmName,
                  gen_smtp_options = GenSmtpOptions }}.
 
-terminate(_R,_S) ->
-    %% error_logger:error_msg("elarm mailer worker ~p terminating ~p, ~p~n", [self(), R, S]),
+terminate(R,S) ->
+    lager:info("elarm mailer worker ~p terminating ~p, ~p~n", [self(), R, S]),
     ok.
 
 handle_call(get_alarm,_,S) -> {reply, S#state.subscribed_alarm, S};
