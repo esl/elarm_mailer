@@ -91,6 +91,7 @@ api_is_asked_for_alarms() ->
     elarm_mailer:get_subscribed_alarms().
 
 user_checks_email(Username) ->
+    timer:sleep(300),
     elarm_mailer_test_mailbox:dump().
 
 readable({_, {from, F}, {to, T}, {body, B}}) ->
@@ -112,11 +113,11 @@ smtp_server_running() ->
 %% Plumbing
 start_app([]) ->
     application:start(elarm),
-    application:start(elarm_mailer);
+    ok = application:start(elarm_mailer);
 start_app(Config) ->
     Get = fun(Key) -> element(2, lists:keyfind(Key, 1, Config)) end,
     Swap = fun(Key) -> application:set_env(elarm_mailer, Key, Get(Key)) end,
-    error_logger:tty(true),
+    error_logger:tty(false),
     application:start(elarm),
     application:load(elarm_mailer),
     [ Swap(Key) ||
@@ -127,7 +128,7 @@ teardown() ->
     fun(_Givens) ->
             elarm_mailer_test_mailbox:stop(),
             application:stop(elarm_mailer),
-            application:stop(elarm),
+            ok = application:stop(elarm),
             error_logger:tty(true)
     end.
 
