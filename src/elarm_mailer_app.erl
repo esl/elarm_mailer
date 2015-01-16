@@ -15,6 +15,7 @@ start(_StartType, _StartArgs) ->
            (Env(sender),
             Env(recipients),
             Env(gen_smtp_options),
+            Env(elarm_server),
             Env(subscribed_alarms)),
     {ok, Sup}.
 

@@ -12,6 +12,7 @@
                       {username, "simon.zelazny@localhost"},
                       {password, "password123"},
                       {port, 2525}]},
+                    {elarm_server, elarm_server},
                     {subscribed_alarms, [one_potato, two_potato]}
                    ]},
 

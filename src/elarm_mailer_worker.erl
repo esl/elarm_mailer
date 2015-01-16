@@ -2,7 +2,7 @@
 -behavior(gen_server).
 
 -export([get_alarm/1]).
--export([start_link/4]).
+-export([start_link/5]).
 -export([init/1, terminate/2,
          handle_call/3, handle_cast/2, handle_info/2,
          code_change/3]).
@@ -14,18 +14,22 @@
                  gen_smtp_options :: list() %% see gen_smtp_client.erl
                }).
 
-start_link(From, To, GenSmtpOptions, AlarmName) ->
-    gen_server:start_link(?MODULE, [From, To, GenSmtpOptions, AlarmName], []).
+start_link(From, To, GenSmtpOptions, ElarmServer, AlarmName) ->
+    gen_server:start_link(?MODULE,
+                          [From, To, GenSmtpOptions, ElarmServer, AlarmName],
+                          []).
 
 get_alarm(Worker) ->
     gen_server:call(Worker, get_alarm).
 
-init([From, To, GenSmtpOptions, AlarmName]) ->
+init([From, To, GenSmtpOptions, ElarmServer, AlarmName]) ->
     process_flag(trap_exit, true),
-    error_logger:info_msg("worker started with args: ~p\n", [{From, To, GenSmtpOptions, AlarmName}]),
-    {_Ref, _, _} = elarm:subscribe([all], self()),
+    error_logger:info_msg("worker started with args: ~p\n",
+                          [{From, To, GenSmtpOptions, ElarmServer, AlarmName}]),
+    {_Ref, _, _} = elarm:subscribe(ElarmServer, [all], self()),
     {ok, #state{ from = From, to = To,
-                 subscribed_alarm = AlarmName, gen_smtp_options = GenSmtpOptions }}.
+                 subscribed_alarm = AlarmName,
+                 gen_smtp_options = GenSmtpOptions }}.
 
 terminate(_R,_S) ->
     %% error_logger:error_msg("elarm mailer worker ~p terminating ~p, ~p~n", [self(), R, S]),
