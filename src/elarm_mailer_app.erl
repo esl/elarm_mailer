@@ -9,24 +9,15 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    %% todo specify temp dir in config
-    os:cmd("mkdir -p /tmp/elarm_mailer"),
+    Env = fun(Key) -> elarm_mailer_config:get_env(Key) end,
     {ok, Sup} = elarm_mailer_sup:start_link(),
-    ok = elarm_mailer:subscribe_to_alarms(app_config_header(sender),
-                                          app_config_header(recipients),
-                                          app_config_header(gen_smtp_options),
-                                          app_config_alarms()),
+    ok = elarm_mailer:subscribe_to_alarms
+           (Env(sender),
+            Env(recipients),
+            Env(gen_smtp_options),
+            Env(subscribed_alarms)),
     {ok, Sup}.
 
 stop(_State) ->
     ok.
 
-app_config_header(Key) ->
-    {ok, Val} = application:get_env(elarm_mailer, Key),
-    Val.
-
-app_config_alarms() ->
-    case application:get_env(elarm_mailer, subscribed_alarms) of
-        undefined -> [];
-        {ok, Alarms} -> Alarms
-    end.

@@ -25,8 +25,7 @@ it_starts_up(_) ->
                      smtp_server_running(),
                      local_user() end,
               ?_when(User) ->
-                     app_is_started_with_config
-                       (options_for(User) ++ [{subscribed_alarms, []}]) end,
+                     app_is_started_with_config([]) end,
               ?_then(AppStarted) ->
                      ok = AppStarted end,
               teardown()).
@@ -111,7 +110,9 @@ smtp_server_running() ->
     timer:sleep(300).
 
 %% Plumbing
-
+start_app([]) ->
+    application:start(elarm),
+    application:start(elarm_mailer);
 start_app(Config) ->
     Get = fun(Key) -> element(2, lists:keyfind(Key, 1, Config)) end,
     Swap = fun(Key) -> application:set_env(elarm_mailer, Key, Get(Key)) end,
