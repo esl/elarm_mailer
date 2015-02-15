@@ -25,7 +25,9 @@ it_starts_up(_) ->
                      smtp_server_running(),
                      local_user() end,
               ?_when(User) ->
-                     app_is_started_with_config([]) end,
+                     app_is_started_with_config
+                       (options_for(User, "admin@example.org")
+                        ++ [{subscribed_alarms, []}]) end,
               ?_then(AppStarted) ->
                      ok = AppStarted end,
               teardown()).
@@ -35,17 +37,17 @@ it_sends_mail_on_subscribed_alarm(CT) ->
                      User = local_user(),
                      smtp_server_running(),
                      app_is_started_with_config
-                       (options_for(User) ++ [{subscribed_alarms, [peace_attack]}]),
-                     alarm_gets_raised(peace_attack, "Hello"),
-                     User end,
+                       (options_for(User, "foo@example.com")
+                        ++ [{subscribed_alarms, [peace_attack]}]),
+                     alarm_gets_raised(peace_attack, "Hello") end,
 
-              ?_when(User) -> user_checks_email(User) end,
+              ?_when(_) -> user_checks_email("foo@example.com") end,
 
-              ?_then(UsersMail) ->
+              ?_then(Email) ->
                      {{from, User},
-                      {to, ["administrator@example.com"]},
+                      {to, ["foo@example.com"]},
                       {body, {peace_attack, "Hello"}}}
-                         = readable(hd(UsersMail)) end,
+                         = readable(hd(Email)) end,
               teardown()).
 
 it_doesnt_send_mail_on_non_subscribed_alarm(CT) ->
@@ -53,14 +55,14 @@ it_doesnt_send_mail_on_non_subscribed_alarm(CT) ->
                      User = local_user(),
                      smtp_server_running(),
                      app_is_started_with_config
-                       (options_for(User) ++ [{subscribed_alarms, [peace_attack]}]),
-                     alarm_gets_raised(pigeons_ahoy, "Plop"),
-                     User end,
+                       (options_for(User, "bar@example.com")
+                        ++ [{subscribed_alarms, [peace_attack]}]),
+                     alarm_gets_raised(pigeon_attack, "Plop") end,
 
-              ?_when(User) -> user_checks_email(User) end,
+              ?_when(_) -> user_checks_email("bar@example.com") end,
 
-              ?_then(UsersMail) ->
-                     [] = UsersMail end,
+              ?_then(Email) -> [] = Email end,
+
               teardown()).
 
 it_can_report_subscribed_alarms(CT) ->
@@ -68,7 +70,7 @@ it_can_report_subscribed_alarms(CT) ->
                      User = local_user(),
                      smtp_server_running(),
                      app_is_started_with_config
-                       (options_for(User) ++
+                       (options_for(User, "baz@example.com") ++
                             [{subscribed_alarms, [george, john, paul, ringo]}]) end,
 
               ?_when(_) -> api_is_asked_for_alarms() end,
@@ -91,8 +93,13 @@ api_is_asked_for_alarms() ->
     elarm_mailer:get_subscribed_alarms().
 
 user_checks_email(Username) ->
-    timer:sleep(300),
-    elarm_mailer_test_mailbox:dump().
+    message_with_recipeint(list_to_binary(Username),
+                           elarm_mailer_test_mailbox:dump()).
+
+message_with_recipeint(RecipientName, Mailbox) ->
+    case lists:keyfind({to, [RecipientName]}, 3, Mailbox) of
+        false -> [];
+        Val -> [Val] end.
 
 readable({_, {from, F}, {to, T}, {body, B}}) ->
     {{from, binary_to_list(F)},
@@ -138,9 +145,9 @@ parse_binary(Bin) ->
     {ok,Term} = erl_parse:parse_term(Tokens),
     Term.
 
-options_for(User) ->
+options_for(User, Recipient) ->
     [{sender, User},
-     {recipients, ["administrator@example.com"]},
+     {recipients, [Recipient]},
      {gen_smtp_options, [{relay, ?SMTP_HOST},
                          {username, User},
                          {password, ""},
