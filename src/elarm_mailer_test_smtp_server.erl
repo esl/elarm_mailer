@@ -16,6 +16,11 @@ noop(_) -> ok.
 noop(_,_) -> ok.
 
 
+-ifdef(erlang_now_deprecated).
+time_ref() -> {os:timestamp(), erlang:unique_integer()}.
+-else.
+time_ref() -> erlang:now().
+-endif.
 
 -define(MAILBOX_PROCESS, elarm_mailer_test_mailbox).
 -record(state, {options = [] :: list()}).
@@ -135,7 +140,9 @@ handle_RCPT_extension(Extension, _State) ->
 handle_DATA(_From, _To, <<>>, State) ->
 	{error, "552 Message too small", State};
 handle_DATA(From, To, Data, State) ->
-    Reference = lists:flatten([io_lib:format("~2.16.0b", [X]) || <<X>> <= erlang:md5(term_to_binary(erlang:now()))]),
+    BinReference = erlang:md5(term_to_binary(time_ref())),
+    Reference = lists:flatten([io_lib:format("~2.16.0b", [X])
+                                                     || <<X>> <= BinReference]),
     ?LOG("message from ~s to ~p queued as ~s, body l ~p~n", [From, To, Reference, Data]),
     notify_mailbox_or_crash({os:timestamp(), {from, From}, {to, To}, {body, Data}}),
     %% At this point, if we return ok, we've accepted responsibility for the email
