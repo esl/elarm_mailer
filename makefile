@@ -4,16 +4,16 @@ REBAR=rebar
 REBAR_TEST=$(REBAR) -C rebar.test.config
 
 test:	test-deps compile
-	$(REBAR_TEST) ct skip_deps=true
+	$(REBAR) ct skip_deps=true
 
 test-deps:
 	$(REBAR_TEST) get-deps
 
 compile:
-	$(REBAR_TEST) compile
+	$(REBAR) compile
 
 clean:
-	$(REBAR_TEST) clean
+	$(REBAR) clean
 
 devsmtp:
 	python -m smtpd -n -c DebuggingServer localhost:2525
