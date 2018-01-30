@@ -18,4 +18,8 @@ flatten(From, To, Subject, MessageText) ->
                    "To: ", To, "\r\n", "\r\n", MessageText]).
 
 subject(#alarm{alarm_id = AlarmId, src = AlarmSrc}) ->
-    io_lib:format("Alarm! ~p : ~p", [AlarmId, AlarmSrc]).
+    % Using 1000p in order to avoid linebreaks for long alarm messages
+    % Linebreaks in the email message violate format of email messages
+    % And are causing gen_smtp failures
+    % Please also refer related RFC http://www.faqs.org/rfcs/rfc2822.html
+    io_lib:format("Alarm! ~1000p : ~1000p", [AlarmId, AlarmSrc]).
