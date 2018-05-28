@@ -16,7 +16,8 @@ groups() ->
       [it_starts_up,
        it_sends_mail_on_subscribed_alarm,
        it_doesnt_send_mail_on_non_subscribed_alarm,
-       it_can_report_subscribed_alarms
+       it_can_report_subscribed_alarms,
+       when_restarted_resubscribes_to_alarms
       ]}
     ].
 
@@ -80,6 +81,24 @@ it_can_report_subscribed_alarms(CT) ->
                          lists:sort(Alarms) end,
               teardown()).
 
+when_restarted_resubscribes_to_alarms(CT) ->
+    bddr:test(?given()->
+                     User = local_user(),
+                     smtp_server_running(),
+                     app_is_started_with_config(
+                        options_for(User, "baz@example.com") ++
+                        [{subscribed_alarms, [attack]}])
+              end,
+              ?_when(_) ->
+                env_config_sender_changed_to("foo@example.com"),
+                elarm_mailer_config_is_reloaded(),
+                alarm_gets_raised(attack, "Plop")
+              end,
+              ?_then(_) ->
+                assert_all_emails_are_from(<<"foo@example.com">>)
+              end,
+teardown()).
+
 local_user() ->
     string:strip(os:cmd("echo $USER"), right, $\n) ++ "@localhost".
 
@@ -93,6 +112,7 @@ api_is_asked_for_alarms() ->
     elarm_mailer:get_subscribed_alarms().
 
 user_checks_email(Username) ->
+    ct:pal("Messages in box: ~p",[elarm_mailer_test_mailbox:dump()]),
     message_with_recipeint(list_to_binary(Username),
                            elarm_mailer_test_mailbox:dump()).
 
@@ -114,7 +134,7 @@ extract_terms(Body) ->
 
 smtp_server_running() ->
     elarm_mailer_test_mailbox:start(),
-    {ok, Pid} = gen_smtp_server:start_link(elarm_mailer_test_smtp_server),
+    {ok, _Pid} = gen_smtp_server:start_link(elarm_mailer_test_smtp_server),
     timer:sleep(300).
 
 %% Plumbing
@@ -152,3 +172,18 @@ options_for(User, Recipient) ->
                          {username, User},
                          {password, ""},
                          {port, ?SMTP_PORT}]}].
+
+env_config_sender_changed_to(Sender) ->
+    application:set_env(elarm_mailer, sender, Sender).
+
+elarm_mailer_config_is_reloaded() ->
+    elarm_mailer:reload_config().
+
+get_received_emails() ->
+    elarm_mailer_test_mailbox:dump().
+
+assert_all_emails_are_from(ExpectedFrom) ->
+    lists:foreach(fun(Email) ->
+                    {_Ts, {from, From}, {to, To}, _} = Email,
+                    From = ExpectedFrom
+                  end, get_received_emails()).
