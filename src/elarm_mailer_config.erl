@@ -12,5 +12,5 @@ default_value(gen_smtp_options) -> [];
 default_value(recipients) -> [];
 default_value(sender) -> "nobody@nohost";
 default_value(subscribed_alarms) -> [];
-default_value(formatter) -> none;
+default_value(formatter) -> elarm_mailer_email;
 default_value(X) -> error({missing_default_value, X}).
