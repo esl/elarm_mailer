@@ -20,7 +20,8 @@ subscribe_from_config() ->
         Env(recipients),
         Env(gen_smtp_options),
         Env(elarm_server),
-        Env(subscribed_alarms)).
+        Env(subscribed_alarms),
+        Env(formatter)).
 
 stop(_State) ->
     ok.

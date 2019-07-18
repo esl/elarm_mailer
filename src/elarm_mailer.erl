@@ -1,5 +1,5 @@
 -module(elarm_mailer).
--export([subscribe_to_alarm/5, subscribe_to_alarms/5]).
+-export([subscribe_to_alarm/6, subscribe_to_alarms/6]).
 -export([get_subscribed_alarms/0]).
 -export([start/0]).
 -export([reload_config/0]).
@@ -15,14 +15,14 @@ get_subscribed_alarms() ->
     [ {elarm_mailer_worker:get_alarm(Worker), Worker}
       || {_,Worker,_,_} <- supervisor:which_children(?WORKER_SUP) ].
 
-subscribe_to_alarm(From, To, GenSmtpOptions, ElarmServer, AlarmName) ->
+subscribe_to_alarm(From, To, GenSmtpOptions, ElarmServer, AlarmName, FormatterModule) ->
     {ok, _P} =
         supervisor:start_child(?WORKER_SUP, [From, To,
                                              GenSmtpOptions,
-                                             ElarmServer, AlarmName]).
+                                             ElarmServer, AlarmName, FormatterModule]).
 
-subscribe_to_alarms(From, To, GenSmtpOptions, ElarmServer, Alarms) ->
-    [ subscribe_to_alarm(From, To, GenSmtpOptions, ElarmServer, A)
+subscribe_to_alarms(From, To, GenSmtpOptions, ElarmServer, Alarms, FormatterModule) ->
+    [ subscribe_to_alarm(From, To, GenSmtpOptions, ElarmServer, A, FormatterModule)
       || A <-  Alarms ],
     ok.
 

@@ -1,11 +1,11 @@
 -module(elarm_mailer_email).
+-behavior(gen_elarm_format).
+
 -export([make_body/3]).
 -include_lib("elarm/include/elarm.hrl").
 
 make_body(Sender, Recipients, Alarm) ->
     flatten(Sender, hd(Recipients), subject(Alarm), format(Alarm)).
-
-%% TODO: Consider something smart, like a templating engine.
 
 format(Term) ->
     Nice = list_to_binary(lists:flatten(io_lib:format("~p", [Term]))),
