@@ -48,6 +48,13 @@ handle_info({elarm, _, #alarm{alarm_id=AlarmName} = A},
     gen_smtp_client:send_blocking({S#state.from, S#state.to, EmailBody},
                          S#state.gen_smtp_options),
     {noreply, S};
+%% Handle 'all' - send email for any alarm
+handle_info({elarm, _, #alarm{} = A},
+            #state{subscribed_alarm=all, formatter = Module} = S) ->
+    EmailBody = Module:make_body(S#state.from, S#state.to, A),
+    gen_smtp_client:send_blocking({S#state.from, S#state.to, EmailBody},
+                         S#state.gen_smtp_options),
+    {noreply, S};
 handle_info(_, S) -> {noreply, S}.
 
 code_change(_,_,_) ->
