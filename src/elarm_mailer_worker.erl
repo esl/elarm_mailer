@@ -55,6 +55,20 @@ handle_info({elarm, _, #alarm{} = A},
     gen_smtp_client:send_blocking({S#state.from, S#state.to, EmailBody},
                          S#state.gen_smtp_options),
     {noreply, S};
+%% Handle clear event for specific alarm subscription
+handle_info({elarm, _, {clear, AlarmId, Src, _EventId, _Reason}},
+            #state{subscribed_alarm=AlarmName, formatter = Module} = S) when AlarmName == AlarmId ->
+    EmailBody = Module:make_clear_body(S#state.from, S#state.to, AlarmId, Src),
+    gen_smtp_client:send_blocking({S#state.from, S#state.to, EmailBody},
+                         S#state.gen_smtp_options),
+    {noreply, S};
+%% Handle clear event for 'all' subscription
+handle_info({elarm, _, {clear, AlarmId, Src, _EventId, _Reason}},
+            #state{subscribed_alarm=all, formatter = Module} = S) ->
+    EmailBody = Module:make_clear_body(S#state.from, S#state.to, AlarmId, Src),
+    gen_smtp_client:send_blocking({S#state.from, S#state.to, EmailBody},
+                         S#state.gen_smtp_options),
+    {noreply, S};
 handle_info(_, S) -> {noreply, S}.
 
 code_change(_,_,_) ->
